@@ -1,21 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
-namespace ARainbowTags
+namespace RainbowTags
 {
 	public class RainbowTagController : MonoBehaviour
 	{
-		private ServerRoles _roles;
-		private string _originalColor;
+		private ServerRoles Roles;
+		private string OriginalColor;
 
-		private int _position = 0;
-		private float _nextCycle = 0f;
+		private int Position = 0;
+		private float NextCycle = 0f;
 
-		public static string[] Colors =
+		public static List<string> Colors = new List<string>
 		{
 			"pink",
 			"red",
@@ -41,32 +38,30 @@ namespace ARainbowTags
 			"pumpkin"
 		};
 
-		public static float interval { get; set; } = 0.5f;
+		public static float Interval { get; set; } = RainbowTagMod.RainbowTagRef.Config.TagInterval;
 
-
-		private void Start()
+		public void Awake()
 		{
-			_roles = GetComponent<ServerRoles>();
-			_nextCycle = Time.time;
-			_originalColor = _roles.NetworkMyColor;
+			Roles = GetComponent<ServerRoles>();
+			NextCycle = Time.time;
+			OriginalColor = Roles.NetworkMyColor;
 		}
 
-
-		private void OnDisable()
+		public void OnDestroy()
 		{
-			_roles.NetworkMyColor = _originalColor;
+			Roles.NetworkMyColor = OriginalColor;
 		}
 
-
-		private void Update()
+		public void Update()
 		{
-			if (Time.time < _nextCycle) return;
-			_nextCycle += interval; 
+			if (Time.time >= NextCycle)
+			{
+				NextCycle += Interval;
+				Roles.NetworkMyColor = Colors[Position];
 
-			_roles.NetworkMyColor = Colors[_position];
-
-			if (++_position >= Colors.Length) 
-				_position = 0;
+				if (++Position >= Colors.Count)
+					Position = 0;
+			}
 		}
 	}
 }

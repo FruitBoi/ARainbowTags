@@ -1,86 +1,39 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EXILED;
-using EXILED.Extensions;
-using Harmony;
+using Exiled.API.Features;
 using UnityEngine;
 
-namespace ARainbowTags
+namespace RainbowTags
 {
-	public class RainbowTagMod : EXILED.Plugin
+	public class RainbowTagMod : Plugin<Config>
 	{
-		public static RainbowTagMod Instance;
+		public static RainbowTagMod RainbowTagRef { get; private set; }
+		public override string Name => nameof(RainbowTags);
+		public override string Author => "FruitBoi";
+		public EventHandler Handler;
 
-		public const string kCfgPrefix = "rainbowtags_";
-
-		public static string[] ActiveRoles;
-
-		public static void AddRainbowController(ReferenceHub player)
+		public RainbowTagMod()
 		{
-			var component = player.GetComponent<RainbowTagController>();
-
-			if (component != null) return;
-			player.gameObject.AddComponent<RainbowTagController>();
+			RainbowTagRef = this;
 		}
 
-
-		public override void OnEnable()
+		public override void OnEnabled()
 		{
-			if (!Config.GetBool(kCfgPrefix + "enable", true))
-				return;
+			if (RainbowTagRef.Config.UseCustomSequence)
+				RainbowTagController.Colors = RainbowTagRef.Config.CustomSequence;
 
-			ActiveRoles = Config.GetStringList(kCfgPrefix + "activegroups").ToArray();
-			
-			RainbowTagController.interval = Config.GetFloat(kCfgPrefix + "taginterval", 0.5f);
-
-			if (Config.GetBool(kCfgPrefix + "usecustomsequence"))
-				RainbowTagController.Colors = Config.GetStringList(kCfgPrefix + "colorsequence").ToArray();
-			
-			Events.PlayerJoinEvent += OnPlayerJoinEvent;
-			
-			foreach (var player in PlayerManager.players)
-			{
-				ReferenceHub hub = player.GetPlayer();
-
-				if (!hub.IsRainbowTagUser())
-					continue;
-				
-				AddRainbowController(hub);
-			}
-		}
-		
-		
-		
-
-		private void OnPlayerJoinEvent(PlayerJoinEvent ev)
-		{
-			if (!ev.Player.IsRainbowTagUser())
-				return;
-			
-			
-			AddRainbowController(ev.Player);
+			Handler = new EventHandler(this);
+			Exiled.Events.Handlers.Player.Joined += Handler.OnPlayerJoinEvent;
+			Exiled.Events.Handlers.Server.RoundStarted += Handler.OnRoundStartEvent;
 		}
 
-		public override void OnDisable()
+		public override void OnDisabled()
 		{
-			foreach (var player in PlayerManager.players)
-			{
-				UnityEngine.Object.Destroy(player.GetComponent<RainbowTagController>());
-			}
-
-			Events.PlayerJoinEvent -= OnPlayerJoinEvent;
-		}
-		
-		
-
-		public override void OnReload()
-		{
-			OnDisable();
+			Exiled.Events.Handlers.Server.RoundStarted -= Handler.OnRoundStartEvent;
+			Exiled.Events.Handlers.Player.Joined -= Handler.OnPlayerJoinEvent;
+			Handler = null;
 		}
 
-		public override string getName { get; } = "RainbowTags";
+		public override void OnReloaded() { }
 	}
 }

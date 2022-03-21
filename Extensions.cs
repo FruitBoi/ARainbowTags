@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
+using Exiled.API.Features;
 
-namespace ARainbowTags
+namespace RainbowTags
 {
 	public static class Extensions
 	{
@@ -9,12 +10,12 @@ namespace ARainbowTags
 			=> ServerStatic.GetPermissionsHandler().GetAllGroups().Where(p => p.Value == group).Select(p => p.Key)
 				.FirstOrDefault();
 
-		public static bool IsRainbowTagUser(this ReferenceHub hub)
+		public static bool IsRainbowTagUser(this Player hub)
 		{
-			string group = ServerStatic.GetPermissionsHandler().GetUserGroup(hub.characterClassManager.UserId)
+			string group = ServerStatic.GetPermissionsHandler().GetUserGroup(hub.UserId)
 				.GetGroupName();
 			
-			return !string.IsNullOrEmpty(group) && RainbowTagMod.ActiveRoles.Contains(group);
+			return !string.IsNullOrEmpty(group) && RainbowTagMod.RainbowTagRef.Config.ActiveGroups.Contains(group);
 		}
 	}
 }
